@@ -39,3 +39,6 @@ graph1
 graph1 <- graph1 + scale_colour_discrete(name="Relevant\nCandidates")
 graph1
 
+
+
+##### 2
