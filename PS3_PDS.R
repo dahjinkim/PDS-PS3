@@ -69,13 +69,69 @@ object.size(reorg.pP2) < object.size(pivot.pP2)
 
 
 ##### 3
+rm(list = ls())
 library(fivethirtyeight)
 library(tidyverse)
 polls <- read_csv('https://jmontgomery.github.io/PDS/Datasets/president_primary_polls_feb2020.csv')
 Endorsements <- endorsements_2020
 
+#Change the Endorsements variable name endorsee to candidate_name
+Endorsements <- rename(Endorsements, candidate_name = endorsee)
 
+#Change the Endorsements dataframe into a tibble object
+Endorsements <- as_tibble(Endorsements)
+
+#subset polls data accordingly
+polls3 <- polls %>%
+  filter(candidate_name %in% c("Amy Klobuchar", "Bernard Sanders", "Elizabeth Warren", "Joseph R. Biden Jr.", "Michael Bloomberg", "Pete Buttigieg")) %>%
+  select(candidate_name, sample_size, start_date, party, pct)
+
+#compare candidate names and make them the same
+# 1) check unique names in both dataset
+unique(polls3$candidate_name)
+unique(Endorsements$candidate_name)
+#Bernie and Biden are different
+# 2) make these the same
+Endorsements <- Endorsements %>%
+  mutate(candidate_name = recode(candidate_name,  "Joe Biden" = "Joseph R. Biden Jr.")) %>%
+  mutate(candidate_name = recode(candidate_name,  "Bernie Sanders" = "Bernard Sanders"))
+
+#combine the two dataset by candidate name
+fulldata <- polls3 %>%
+  inner_join(Endorsements, by = "candidate_name")
+#check to see we have 5 candidates
+unique(fulldata$candidate_name)
+
+#create a variable for number of endorsement
+endorsement.count <- fulldata %>%
+  group_by(candidate_name) %>%
+  summarise(count = n())
+
+#plot endorsement count
+p <- ggplot(data=endorsement.count) +
+  geom_col(mapping = aes(x=candidate_name, y=count, fill=candidate_name))
+p
+
+#diff options & save the plot
+p + theme_dark()
+endorse.plot <- p + theme_dark()
+
+#more playing around
+newplot <- p + 
+  theme_classic() +
+  labs(x="Candidate", y="number of endorsement") +
+  ggtitle("Number of Endorsements by Candidates") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+newplot
 
 
 
 ##### 4
+library(tidyverse)
+#install.packages('tm')
+library(tm)
+install.packages('lubridate')
+library(lubridate)
+#install.packages('wordcloud')
+library(wordcloud)
+tweets <- read_csv('https://politicaldatascience.com/PDS/Datasets/trump_tweets.csv')
