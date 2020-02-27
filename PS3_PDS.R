@@ -64,8 +64,9 @@ pivot.pP2 <- sub.pP2 %>%
 #compare size
 object.size(sub.pP2)
 object.size(pivot.pP2)
-object.size(reorg.pP2) < object.size(pivot.pP2)
+object.size(sub.pP2) < object.size(pivot.pP2)
 #the new dataset has a much larger data size
+
 
 
 ##### 3
@@ -127,11 +128,59 @@ newplot
 
 
 ##### 4
+#preparation
+rm(list=ls())
 library(tidyverse)
 #install.packages('tm')
 library(tm)
-install.packages('lubridate')
+#install.packages('lubridate')
 library(lubridate)
 #install.packages('wordcloud')
 library(wordcloud)
 tweets <- read_csv('https://politicaldatascience.com/PDS/Datasets/trump_tweets.csv')
+
+#separate the created_at variable into two new variables
+tweets4 <- tweets %>%
+  separate(created_at, c("date", "time"), sep = " ")
+tweets4$date <- as.Date(tweets4$date, "%m/%d/%Y")
+
+#report the range of dates that is in this dataset.
+summary(tweets4$date)
+#the oldest tweet is 2014-01-01, the newest tweet is 2020-02-14
+
+#remove retweets
+tweets4.og <- tweets4 %>%
+  filter(is_retweet==FALSE)
+
+#find the most retweeted/favorited tweet
+top5fav <- tweets4.og %>%
+  top_n(5, favorite_count) %>%
+  arrange(desc(favorite_count))
+top5fav$text
+top5rt <- tweets4.og %>%
+  top_n(5, retweet_count) %>%
+  arrange(desc(retweet_count))
+top5rt$text
+
+#clean the tweets
+clean.tweets <- tweets4.og %>%
+  select(text) %>%
+  mutate(text = tolower(text)) %>%
+  mutate(text = removeNumbers(text)) %>%
+  mutate(text = removePunctuation(text)) %>%
+  mutate(text = str_replace_all(text, "[^[:alnum:]]", " ")) %>%
+  mutate(text = removeWords(text, stopwords("en"))) %>%
+  mutate(text = removeWords(text, c("see", "people","new","want","one","even","must","need", "done","back","just","going", "know", "can", "said","like","many","like","realdonaldtrump"))) %>%
+  mutate(text = removeWords(text, "amp")) %>%
+  mutate(text = stripWhitespace(text))
+    
+#create wordcloud
+wordcloud(words = clean.tweets$text, max.words = 50, min.freq = 3, random.order = F)
+
+#document term matrix
+clean.tweets <- Corpus(VectorSource(clean.tweets$text))
+Dtm <- DocumentTermMatrix(clean.tweets, control = list(weighting = weightTfIdf))
+
+#report 50 with highest tf.idf, low frequency bound .8
+top50Dtm <- findFreqTerms(Dtm, lowfreq = 0.8)[1:50]
+top50Dtm
