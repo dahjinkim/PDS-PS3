@@ -6,7 +6,7 @@
 rm(list=ls())
 
 ##### 1
-#calling ggplot2 & readr
+#calling packages
 library(ggplot2)
 library(readr)
 
@@ -39,19 +39,43 @@ graph1 <- ggplot(data=primaryPolls1)+
   labs(x = "Dates", y = "Poll Percentage") + 
   ylim(-10, 50) + 
   scale_colour_discrete(name="Relevant\nCandidates")
-  graph1
+graph1
 #this allows us to see where the observations for each candidate lie.
 #we can note the difference of poll frequencies among candidates.
 
 
 
 ##### 2
+rm(list = ls())
+#reload data as tibble
+library(tidyverse)
+primaryPolls <- read_csv('https://jmontgomery.github.io/PDS/Datasets/president_primary_polls_feb2020.csv')
+primaryPolls$start_date <- as.Date(primaryPolls$start_date, "%m/%d/%Y")
+primaryPolls2 <- primaryPolls
 
+#subset the data set for relevant candidates with state polls
+sub.pP2 <- primaryPolls2 %>%
+  filter(candidate_name %in% c("Amy Klobuchar", "Bernard Sanders", "Elizabeth Warren", "Joseph R. Biden Jr.", "Michael Bloomberg", "Pete Buttigieg", "Tom Steyer"))
+
+#new dataset with one row for each candidate-state dyad
+pivot.pP2 <- sub.pP2 %>%
+  pivot_wider(names_from = start_date, values_from = pct)
+
+#compare size
+object.size(sub.pP2)
+object.size(pivot.pP2)
+object.size(reorg.pP2) < object.size(pivot.pP2)
+#the new dataset has a much larger data size
 
 
 ##### 3
 library(fivethirtyeight)
 library(tidyverse)
-polls <- read_csv('https://jmontgomery.github.io/PDS/Datasets/president
-_primary_polls_feb2020.csv')
+polls <- read_csv('https://jmontgomery.github.io/PDS/Datasets/president_primary_polls_feb2020.csv')
 Endorsements <- endorsements_2020
+
+
+
+
+
+##### 4
